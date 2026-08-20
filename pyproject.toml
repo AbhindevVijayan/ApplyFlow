@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "job-application-agent"
+version = "0.1.0"
+description = "Production-grade job discovery and application automation platform"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = { text = "MIT" }
+
+dependencies = [
+    "fastapi>=0.116,<1.0",
+    "uvicorn[standard]>=0.35,<1.0",
+    "pydantic>=2.11,<3.0",
+    "pydantic-settings>=2.10,<3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4,<9.0",
+    "pytest-asyncio>=1.1,<2.0",
+    "httpx>=0.28,<1.0",
+    "ruff>=0.12,<1.0",
+    "mypy>=1.17,<2.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["apps*", "packages*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "B",
+    "UP",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
