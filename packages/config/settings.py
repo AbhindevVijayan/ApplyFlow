@@ -24,6 +24,12 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    def greenhouse_boards(self) -> tuple[str, ...]:
+        """Return configured Greenhouse board tokens."""
+        return tuple(
+            token.strip() for token in self.greenhouse_board_tokens.split(",") if token.strip()
+        )
+
 
 @lru_cache
 def get_settings() -> Settings:
