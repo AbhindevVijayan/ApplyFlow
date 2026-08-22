@@ -39,3 +39,7 @@ test-results/
 dist/
 build/
 *.egg-info/
+
+.coverage
+
+.coverage
