@@ -27,6 +27,7 @@ class Skill(Base):
 
     candidates: Mapped[list["CandidateSkill"]] = relationship(
         back_populates="skill",
+        passive_deletes=True,
     )
 
 

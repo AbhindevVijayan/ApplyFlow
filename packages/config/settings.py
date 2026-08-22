@@ -8,11 +8,14 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_debug: bool = False
 
-    mysql_host: str
-    mysql_port: int
-    mysql_database: str
-    mysql_user: str
-    mysql_password: str
+    mysql_host: str = ""
+    mysql_port: int = 0
+    mysql_database: str = ""
+    mysql_user: str = ""
+    mysql_password: str = ""
+
+    greenhouse_enabled: bool = False
+    greenhouse_board_tokens: str = ""
 
     model_config = SettingsConfigDict(
         env_file=".env",

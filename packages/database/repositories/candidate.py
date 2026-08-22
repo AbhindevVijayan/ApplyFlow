@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from uuid import UUID
 
 from sqlalchemy import select
@@ -48,3 +49,14 @@ class CandidateRepository:
         """Delete a candidate."""
         await self._session.delete(candidate)
         await self._session.flush()
+
+    async def list_all(self) -> Sequence[Candidate]:
+        """Return all candidates in deterministic order."""
+        statement = select(Candidate).order_by(
+            Candidate.created_at.asc(),
+            Candidate.id.asc(),
+        )
+
+        result = await self._session.execute(statement)
+
+        return result.scalars().all()

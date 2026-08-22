@@ -12,7 +12,10 @@ from packages.database.session import SessionFactory
 @pytest.fixture
 async def session() -> AsyncGenerator[AsyncSession, None]:
     async with SessionFactory() as session:
-        yield session
+        try:
+            yield session
+        finally:
+            await session.rollback()
 
 
 @pytest.mark.asyncio
@@ -144,3 +147,50 @@ async def test_delete_candidate(
     deleted = await repository.get_by_id(candidate_id)
 
     assert deleted is None
+
+
+@pytest.mark.asyncio
+async def test_list_all_returns_candidates_in_deterministic_order(
+    session: AsyncSession,
+) -> None:
+    repository = CandidateRepository(session)
+
+    first = Candidate(
+        full_name="First Candidate",
+        email="list-first@example.com",
+    )
+
+    second = Candidate(
+        full_name="Second Candidate",
+        email="list-second@example.com",
+    )
+
+    third = Candidate(
+        full_name="Third Candidate",
+        email="list-third@example.com",
+    )
+
+    await repository.create(first)
+    await repository.create(second)
+    await repository.create(third)
+    await session.commit()
+
+    candidates = await repository.list_all()
+
+    candidate_ids = {candidate.id for candidate in candidates}
+
+    assert first.id in candidate_ids
+    assert second.id in candidate_ids
+    assert third.id in candidate_ids
+
+    expected = sorted(
+        candidates,
+        key=lambda candidate: (candidate.created_at, candidate.id),
+    )
+
+    assert [candidate.id for candidate in candidates] == [candidate.id for candidate in expected]
+
+    for candidate in (first, second, third):
+        await repository.delete(candidate)
+
+    await session.commit()
