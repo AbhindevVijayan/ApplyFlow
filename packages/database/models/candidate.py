@@ -6,6 +6,7 @@ from sqlalchemy import DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from packages.database.base import Base
+from packages.database.models.candidate_profile import CandidateProfile
 from packages.database.models.skill import CandidateSkill
 
 if TYPE_CHECKING:
@@ -63,4 +64,10 @@ class Candidate(Base):
     skills: Mapped[list["CandidateSkill"]] = relationship(
         back_populates="candidate",
         cascade="all, delete-orphan",
+    )
+
+    profile: Mapped["CandidateProfile | None"] = relationship(
+    back_populates="candidate",
+    uselist=False,
+    cascade="all, delete-orphan",
     )

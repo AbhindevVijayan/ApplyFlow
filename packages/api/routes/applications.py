@@ -30,6 +30,7 @@ from packages.application.applications.list_applications import ListApplications
 from packages.application.applications.update_application import (
     UNSET,
     InvalidApplicationTransitionError,
+    Unset,
     UpdateApplication,
     UpdateApplicationCommand,
 )
@@ -40,7 +41,10 @@ from packages.database.repositories.application_adapter import (
     ApplicationRepositoryAdapter,
 )
 from packages.database.session import get_session
-from packages.domain.applications.entities import Application
+from packages.domain.applications.entities import (
+    Application,
+    ApplicationStatus,
+)
 
 router = APIRouter(
     prefix="/applications",
@@ -197,21 +201,46 @@ async def update_application(
 
     fields = payload.model_fields_set
 
+    application_status: ApplicationStatus | Unset
+
+    if "status" in fields:
+        if payload.status is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="status cannot be null",
+            )
+
+        application_status = payload.status
+    else:
+        application_status = UNSET
+
     use_case = UpdateApplication(repository)
 
     try:
         application = await use_case.execute(
             UpdateApplicationCommand(
                 application_id=application_id,
-                status=(payload.status if "status" in fields else UNSET),
-                applied_at=(payload.applied_at if "applied_at" in fields else UNSET),
+                status=application_status,
+                applied_at=(
+                    payload.applied_at
+                    if "applied_at" in fields
+                    else UNSET
+                ),
                 external_application_url=(
                     payload.external_application_url
                     if "external_application_url" in fields
                     else UNSET
                 ),
-                notes=(payload.notes if "notes" in fields else UNSET),
-                failure_reason=(payload.failure_reason if "failure_reason" in fields else UNSET),
+                notes=(
+                    payload.notes
+                    if "notes" in fields
+                    else UNSET
+                ),
+                failure_reason=(
+                    payload.failure_reason
+                    if "failure_reason" in fields
+                    else UNSET
+                ),
             ),
         )
     except UpdateApplicationNotFoundError as exc:

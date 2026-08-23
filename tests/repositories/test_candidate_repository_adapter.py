@@ -1,4 +1,3 @@
-from collections.abc import AsyncGenerator
 from uuid import uuid4
 
 import pytest
@@ -7,17 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from packages.database.repositories.candidate_adapter import (
     CandidateRepositoryAdapter,
 )
-from packages.database.session import SessionFactory
 from packages.domain.candidates.entities import Candidate
-
-
-@pytest.fixture
-async def session() -> AsyncGenerator[AsyncSession, None]:
-    async with SessionFactory() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
 
 
 @pytest.mark.asyncio

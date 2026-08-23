@@ -168,3 +168,4 @@ class UpdateApplication:
         )
 
         return await self._repository.update(updated)
+    

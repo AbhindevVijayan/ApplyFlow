@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator
+
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -6,16 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.database.models.candidate import Candidate
 from packages.database.repositories.candidate import CandidateRepository
-from packages.database.session import SessionFactory
-
-
-@pytest.fixture
-async def session() -> AsyncGenerator[AsyncSession, None]:
-    async with SessionFactory() as session:
-        try:
-            yield session
-        finally:
-            await session.rollback()
 
 
 @pytest.mark.asyncio
