@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from packages.application.discovery.run_discovery import RunDiscovery
 from packages.config.settings import get_settings
+from packages.database.repositories.candidate_adapter import CandidateRepositoryAdapter
 from packages.database.repositories.job_adapter import JobRepositoryAdapter
+from packages.database.repositories.skill_adapter import SkillRepositoryAdapter
 from packages.database.session import get_session
 from packages.infrastructure.discovery.greenhouse.client import GreenhouseClient
 from packages.infrastructure.discovery.greenhouse.source import GreenhouseJobSource
@@ -44,3 +46,17 @@ async def get_discovery_use_case(
             sources=sources,
             repository=repository,
         )
+
+
+def get_skill_repository(
+    session: SessionDependency,
+) -> SkillRepositoryAdapter:
+    """Build the skill repository for the current request."""
+    return SkillRepositoryAdapter(session)
+
+
+def get_candidate_repository(
+    session: SessionDependency,
+) -> CandidateRepositoryAdapter:
+    """Build the candidate repository for the current request."""
+    return CandidateRepositoryAdapter(session)

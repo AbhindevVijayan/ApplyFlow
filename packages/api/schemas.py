@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+from packages.domain.applications.entities import ApplicationStatus
+
 
 class CreateCandidateRequest(BaseModel):
     """HTTP payload for creating a candidate."""
@@ -111,3 +113,74 @@ class JobResponse(BaseModel):
     employment_type: str | None
     discovered_at: datetime | None
     created_at: datetime | None
+
+
+class CreateSkillRequest(BaseModel):
+    """HTTP payload for creating a skill."""
+
+    name: str
+
+
+class SkillResponse(BaseModel):
+    """HTTP representation of a skill."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+
+
+class AddCandidateSkillRequest(BaseModel):
+    """HTTP payload for assigning a skill to a candidate."""
+
+    skill_id: UUID
+    proficiency: str | None = None
+
+
+class CandidateSkillResponse(BaseModel):
+    """HTTP representation of a candidate-skill association."""
+
+    candidate_id: UUID
+    skill_id: UUID
+    proficiency: str | None
+
+
+class CreateApplicationRequest(BaseModel):
+    """HTTP payload for creating a job application."""
+
+    candidate_id: UUID
+    job_id: UUID
+    resume_id: UUID
+    status: ApplicationStatus = ApplicationStatus.DRAFT
+    applied_at: datetime | None = None
+    external_application_url: str | None = None
+    notes: str | None = None
+    failure_reason: str | None = None
+
+
+class UpdateApplicationRequest(BaseModel):
+    """HTTP payload for partially updating a job application."""
+
+    status: ApplicationStatus | None = None
+    applied_at: datetime | None = None
+    external_application_url: str | None = None
+    notes: str | None = None
+    failure_reason: str | None = None
+
+
+class ApplicationResponse(BaseModel):
+    """HTTP representation of a job application."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    candidate_id: UUID
+    job_id: UUID
+    resume_id: UUID
+    status: ApplicationStatus
+    applied_at: datetime | None
+    external_application_url: str | None
+    notes: str | None
+    failure_reason: str | None
+    created_at: datetime | None
+    updated_at: datetime | None

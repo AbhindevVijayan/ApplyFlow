@@ -4,14 +4,23 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from packages.api.schemas import CreateResumeRequest, ResumeResponse
+from packages.api.schemas import (
+    CreateResumeRequest,
+    ResumeResponse,
+    UpdateResumeRequest,
+)
 from packages.application.resumes.create_resume import (
     CreateResume,
     CreateResumeCommand,
 )
+from packages.application.resumes.delete_resume import DeleteResume
 from packages.application.resumes.get_resume import (
     GetResume,
     GetResumeCommand,
+)
+from packages.application.resumes.update_resume import (
+    UpdateResume,
+    UpdateResumeCommand,
 )
 from packages.database.repositories.resume_adapter import (
     ResumeRepositoryAdapter,
@@ -194,3 +203,61 @@ async def get_candidate_resumes(
         )
         for resume in resumes
     ]
+
+
+@router.patch(
+    "/{resume_id}",
+    response_model=ResumeResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def update_resume(
+    resume_id: UUID,
+    payload: UpdateResumeRequest,
+    repository: RepositoryDependency,
+) -> ResumeResponse:
+    """Update a resume."""
+
+    use_case = UpdateResume(repository)
+
+    try:
+        resume = await use_case.execute(
+            UpdateResumeCommand(
+                resume_id=resume_id,
+                filename=payload.filename,
+                content_type=payload.content_type,
+                storage_key=payload.storage_key,
+                parsed_text=payload.parsed_text,
+                is_canonical=payload.is_canonical,
+            ),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+
+    return ResumeResponse(
+        id=resume.id,
+        candidate_id=resume.candidate_id,
+        filename=resume.filename,
+        content_type=resume.content_type,
+        storage_key=resume.storage_key,
+        parsed_text=resume.parsed_text,
+        is_canonical=resume.is_canonical,
+        created_at=resume.created_at,
+    )
+
+
+@router.delete(
+    "/{resume_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_resume(
+    resume_id: UUID,
+    repository: RepositoryDependency,
+) -> None:
+    """Delete a resume."""
+
+    use_case = DeleteResume(repository)
+
+    await use_case.execute(resume_id)

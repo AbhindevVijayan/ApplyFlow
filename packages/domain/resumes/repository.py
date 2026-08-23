@@ -5,16 +5,16 @@ from packages.domain.resumes.entities import Resume
 
 
 class ResumeRepository(ABC):
-    """Port for resume persistence."""
+    """Persistence contract for resume entities."""
 
     @abstractmethod
     async def create(self, resume: Resume) -> Resume:
-        """Create a resume."""
+        """Persist a new resume."""
         raise NotImplementedError
 
     @abstractmethod
     async def get_by_id(self, resume_id: UUID) -> Resume | None:
-        """Get a resume by ID."""
+        """Return a resume by ID."""
         raise NotImplementedError
 
     @abstractmethod
@@ -22,7 +22,7 @@ class ResumeRepository(ABC):
         self,
         candidate_id: UUID,
     ) -> list[Resume]:
-        """Get all resumes belonging to a candidate."""
+        """Return all resumes belonging to a candidate."""
         raise NotImplementedError
 
     @abstractmethod
@@ -30,12 +30,12 @@ class ResumeRepository(ABC):
         self,
         candidate_id: UUID,
     ) -> Resume | None:
-        """Get the canonical resume for a candidate."""
+        """Return the canonical resume for a candidate."""
         raise NotImplementedError
 
     @abstractmethod
     async def update(self, resume: Resume) -> Resume:
-        """Update a resume."""
+        """Update an existing resume."""
         raise NotImplementedError
 
     @abstractmethod
