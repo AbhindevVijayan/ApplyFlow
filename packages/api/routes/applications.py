@@ -221,26 +221,14 @@ async def update_application(
             UpdateApplicationCommand(
                 application_id=application_id,
                 status=application_status,
-                applied_at=(
-                    payload.applied_at
-                    if "applied_at" in fields
-                    else UNSET
-                ),
+                applied_at=(payload.applied_at if "applied_at" in fields else UNSET),
                 external_application_url=(
                     payload.external_application_url
                     if "external_application_url" in fields
                     else UNSET
                 ),
-                notes=(
-                    payload.notes
-                    if "notes" in fields
-                    else UNSET
-                ),
-                failure_reason=(
-                    payload.failure_reason
-                    if "failure_reason" in fields
-                    else UNSET
-                ),
+                notes=(payload.notes if "notes" in fields else UNSET),
+                failure_reason=(payload.failure_reason if "failure_reason" in fields else UNSET),
             ),
         )
     except UpdateApplicationNotFoundError as exc:

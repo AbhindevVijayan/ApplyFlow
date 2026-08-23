@@ -1,6 +1,7 @@
 from packages.database.models.application import Application
 from packages.database.models.candidate import Candidate
 from packages.database.models.candidate_education import CandidateEducation
+from packages.database.models.candidate_experience import CandidateExperience
 from packages.database.models.candidate_profile import CandidateProfile
 from packages.database.models.job import Job
 from packages.database.models.resume import Resume
@@ -12,6 +13,7 @@ __all__ = [
     "CandidateProfile",
     "CandidateSkill",
     "CandidateEducation",
+    "CandidateExperience",
     "Job",
     "Resume",
     "Skill",

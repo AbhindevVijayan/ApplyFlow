@@ -1,4 +1,3 @@
-
 from uuid import uuid4
 
 from httpx import ASGITransport, AsyncClient
@@ -562,4 +561,3 @@ async def test_remove_candidate_skill_returns_404_when_assignment_missing() -> N
         )
 
     assert response.status_code == 404
-
