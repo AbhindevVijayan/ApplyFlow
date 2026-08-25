@@ -8,9 +8,10 @@ from packages.database.repositories.candidate import (
     CandidateRepository as DatabaseCandidateRepository,
 )
 from packages.domain.candidates.entities import Candidate
+from packages.domain.candidates.repository import CandidateRepository
 
 
-class CandidateRepositoryAdapter:
+class CandidateRepositoryAdapter(CandidateRepository):
     """Adapt the SQLAlchemy candidate repository to the domain port."""
 
     def __init__(self, session: AsyncSession) -> None:

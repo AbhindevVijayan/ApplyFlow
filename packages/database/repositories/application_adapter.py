@@ -86,7 +86,22 @@ class ApplicationRepositoryAdapter(ApplicationRepository):
     ) -> Application:
         """Persist changes to a domain application."""
 
-        model = to_model(application)
+        model = await self._repository.get_by_id(application.id)
+
+        if model is None:
+            raise ValueError(
+                f"Application '{application.id}' does not exist.",
+            )
+
+        model.candidate_id = application.candidate_id
+        model.job_id = application.job_id
+        model.resume_id = application.resume_id
+        model.status = application.status.value
+        model.applied_at = application.applied_at
+        model.external_application_url = application.external_application_url
+        model.notes = application.notes
+        model.failure_reason = application.failure_reason
+
         updated = await self._repository.update(model)
 
         return to_domain(updated)

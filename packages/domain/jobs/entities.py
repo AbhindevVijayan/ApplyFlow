@@ -15,5 +15,6 @@ class Job:
     description: str | None = None
     location: str | None = None
     employment_type: str | None = None
+    required_skills: tuple[str, ...] = ()
     discovered_at: datetime | None = None
     created_at: datetime | None = None

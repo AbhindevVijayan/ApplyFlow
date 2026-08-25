@@ -1,6 +1,8 @@
 from datetime import UTC, datetime
 from uuid import uuid4
 
+import pytest
+
 from packages.application.discovery.discover_jobs import DiscoverJobs
 from packages.domain.discovery.entities import DiscoveredJob
 from packages.domain.jobs.entities import Job
@@ -60,6 +62,7 @@ class FakeJobRepository:
         self.jobs = [job for job in self.jobs if job.id != job_id]
 
 
+@pytest.mark.asyncio
 async def test_discover_jobs_persists_discovered_jobs() -> None:
     discovered_at = datetime.now(UTC)
 
@@ -85,12 +88,14 @@ async def test_discover_jobs_persists_discovered_jobs() -> None:
         repository=repository,
     )
 
-    jobs = await use_case.execute()
+    result = await use_case.execute()
 
-    assert len(jobs) == 1
-    assert len(repository.jobs) == 1
+    assert result.discovered_count == 1
+    assert result.persisted_count == 1
+    assert result.duplicate_count == 0
+    assert len(result.jobs) == 1
 
-    job = jobs[0]
+    job = result.jobs[0]
 
     assert job.company == "Acme"
     assert job.title == "Python Developer"
@@ -100,7 +105,10 @@ async def test_discover_jobs_persists_discovered_jobs() -> None:
     assert job.employment_type == "Full-time"
     assert job.discovered_at == discovered_at
 
+    assert len(repository.jobs) == 1
 
+
+@pytest.mark.asyncio
 async def test_discover_jobs_skips_existing_source_urls() -> None:
     source_url = f"https://example.com/{uuid4()}"
 
@@ -128,13 +136,18 @@ async def test_discover_jobs_skips_existing_source_urls() -> None:
         repository=repository,
     )
 
-    jobs = await use_case.execute()
+    result = await use_case.execute()
 
-    assert len(jobs) == 1
+    assert result.discovered_count == 2
+    assert result.persisted_count == 1
+    assert result.duplicate_count == 1
+    assert len(result.jobs) == 1
+
     assert len(repository.jobs) == 1
 
 
-async def test_discover_jobs_returns_empty_sequence_when_source_is_empty() -> None:
+@pytest.mark.asyncio
+async def test_discover_jobs_returns_empty_result_when_source_is_empty() -> None:
     source = FakeJobSource([])
 
     repository = FakeJobRepository()
@@ -144,7 +157,11 @@ async def test_discover_jobs_returns_empty_sequence_when_source_is_empty() -> No
         repository=repository,
     )
 
-    jobs = await use_case.execute()
+    result = await use_case.execute()
 
-    assert jobs == []
+    assert result.discovered_count == 0
+    assert result.persisted_count == 0
+    assert result.duplicate_count == 0
+    assert result.jobs == ()
+
     assert repository.jobs == []

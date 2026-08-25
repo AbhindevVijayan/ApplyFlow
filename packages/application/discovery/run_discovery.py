@@ -12,7 +12,12 @@ class DiscoveryResult:
     """Result of discovering jobs from a single source."""
 
     source: str
+    status: str
     jobs: tuple[Job, ...]
+    discovered_count: int
+    persisted_count: int
+    duplicate_count: int
+    error: str | None = None
 
 
 class RunDiscovery:
@@ -32,17 +37,36 @@ class RunDiscovery:
         results: list[DiscoveryResult] = []
 
         for source in self._sources:
-            discover_jobs = DiscoverJobs(
-                source=source,
-                repository=self._repository,
-            )
+            try:
+                discover_jobs = DiscoverJobs(
+                    source=source,
+                    repository=self._repository,
+                )
 
-            jobs = await discover_jobs.execute()
+                result = await discover_jobs.execute()
+
+            except Exception as exc:
+                results.append(
+                    DiscoveryResult(
+                        source=source.name,
+                        status="failed",
+                        jobs=(),
+                        discovered_count=0,
+                        persisted_count=0,
+                        duplicate_count=0,
+                        error=str(exc),
+                    ),
+                )
+                continue
 
             results.append(
                 DiscoveryResult(
                     source=source.name,
-                    jobs=tuple(jobs),
+                    status="completed",
+                    jobs=result.jobs,
+                    discovered_count=result.discovered_count,
+                    persisted_count=result.persisted_count,
+                    duplicate_count=result.duplicate_count,
                 ),
             )
 

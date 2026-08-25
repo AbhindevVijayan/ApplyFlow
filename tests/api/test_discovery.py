@@ -55,7 +55,11 @@ async def test_discovery_runs_when_greenhouse_is_enabled() -> None:
     use_case.execute.return_value = [
         DiscoveryResult(
             source="greenhouse",
+            status="completed",
             jobs=(),
+            discovered_count=0,
+            persisted_count=0,
+            duplicate_count=0,
         ),
     ]
 

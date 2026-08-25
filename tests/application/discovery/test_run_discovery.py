@@ -181,3 +181,64 @@ async def test_run_discovery_skips_duplicate_jobs() -> None:
     assert len(results) == 1
     assert len(results[0].jobs) == 1
     assert len(repository.jobs) == 1
+
+
+class FailingJobSource:
+    def __init__(
+        self,
+        name: str,
+        error: Exception,
+    ) -> None:
+        self._name = name
+        self._error = error
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    async def discover(self) -> list[DiscoveredJob]:
+        raise self._error
+
+
+@pytest.mark.asyncio
+async def test_run_discovery_isolates_source_failures() -> None:
+    repository = FakeJobRepository()
+
+    failing_source = FailingJobSource(
+        "failing-source",
+        RuntimeError("upstream unavailable"),
+    )
+
+    working_source = FakeJobSource(
+        "working-source",
+        [
+            make_discovered_job(
+                company="Acme",
+                title="Python Developer",
+                source_url="https://example.com/jobs/1",
+            ),
+        ],
+    )
+
+    use_case = RunDiscovery(
+        sources=[failing_source, working_source],
+        repository=repository,
+    )
+
+    results = await use_case.execute()
+
+    assert len(results) == 2
+
+    failed = results[0]
+    assert failed.source == "failing-source"
+    assert failed.status == "failed"
+    assert failed.jobs == ()
+    assert failed.error == "upstream unavailable"
+
+    completed = results[1]
+    assert completed.source == "working-source"
+    assert completed.status == "completed"
+    assert len(completed.jobs) == 1
+    assert completed.error is None
+
+    assert len(repository.jobs) == 1
