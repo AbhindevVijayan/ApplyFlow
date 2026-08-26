@@ -13,7 +13,6 @@ from packages.database.models.resume import Resume
 from packages.database.session import engine
 
 
-
 @pytest.fixture
 async def session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.connect() as connection:
@@ -56,10 +55,7 @@ async def job(session: AsyncSession) -> Job:
         company="Test Company",
         title="Software Engineer",
         source="test",
-        source_url=(
-            f"https://example.com/jobs/"
-            f"test-software-engineer-{uuid4()}"
-        ),
+        source_url=(f"https://example.com/jobs/test-software-engineer-{uuid4()}"),
         description="Test job description",
         location="Bangalore",
         employment_type="Full-time",

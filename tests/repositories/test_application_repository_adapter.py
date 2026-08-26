@@ -58,10 +58,7 @@ async def create_second_job(
         company="Second Test Company",
         title="Backend Engineer",
         source="test",
-        source_url=(
-            f"https://example.com/jobs/"
-            f"second-backend-engineer-{uuid4()}"
-        ),
+        source_url=(f"https://example.com/jobs/second-backend-engineer-{uuid4()}"),
         description="Second test job description",
         location="Bangalore",
         employment_type="Full-time",
@@ -81,9 +78,7 @@ async def create_resume_for_candidate(
         candidate_id=candidate.id,
         filename="second-resume.pdf",
         content_type="application/pdf",
-        storage_key=(
-            f"test-resumes/{candidate.id}/second-resume.pdf"
-        ),
+        storage_key=(f"test-resumes/{candidate.id}/second-resume.pdf"),
         parsed_text="Second test resume content",
         is_canonical=True,
     )
@@ -192,16 +187,11 @@ async def test_adapter_get_by_candidate_id_returns_domain_applications(
         candidate.id,
     )
 
-    application_ids = {
-        application.id for application in applications
-    }
+    application_ids = {application.id for application in applications}
 
     assert first.id in application_ids
     assert second.id in application_ids
-    assert all(
-        isinstance(application, Application)
-        for application in applications
-    )
+    assert all(isinstance(application, Application) for application in applications)
 
     await repository.delete(first.id)
     await repository.delete(second.id)
@@ -240,16 +230,11 @@ async def test_adapter_get_by_job_id_returns_domain_applications(
 
     applications = await repository.get_by_job_id(job.id)
 
-    application_ids = {
-        application.id for application in applications
-    }
+    application_ids = {application.id for application in applications}
 
     assert first.id in application_ids
     assert second.id in application_ids
-    assert all(
-        isinstance(application, Application)
-        for application in applications
-    )
+    assert all(isinstance(application, Application) for application in applications)
 
     await repository.delete(first.id)
     await repository.delete(second.id)
@@ -308,9 +293,7 @@ async def test_adapter_update_persists_domain_application_changes(
     updated_application = replace(
         application,
         status=ApplicationStatus.SUBMITTED,
-        external_application_url=(
-            "https://example.com/application/123"
-        ),
+        external_application_url=("https://example.com/application/123"),
     )
 
     updated = await repository.update(updated_application)
@@ -319,19 +302,13 @@ async def test_adapter_update_persists_domain_application_changes(
     assert isinstance(updated, Application)
     assert updated.id == application.id
     assert updated.status == ApplicationStatus.SUBMITTED
-    assert (
-        updated.external_application_url
-        == "https://example.com/application/123"
-    )
+    assert updated.external_application_url == "https://example.com/application/123"
 
     fetched = await repository.get_by_id(application.id)
 
     assert fetched is not None
     assert fetched.status == ApplicationStatus.SUBMITTED
-    assert (
-        fetched.external_application_url
-        == "https://example.com/application/123"
-    )
+    assert fetched.external_application_url == "https://example.com/application/123"
 
     await repository.delete(application.id)
     await session.flush()

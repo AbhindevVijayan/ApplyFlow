@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from packages.api.dependencies import SubmitApplicationDependency
 from packages.api.schemas import (
     ApplicationResponse,
     CreateApplicationRequest,
@@ -17,16 +18,19 @@ from packages.application.applications.create_application import (
 from packages.application.applications.delete_application import (
     ApplicationNotFoundError as DeleteApplicationNotFoundError,
 )
-from packages.application.applications.delete_application import (
-    DeleteApplication,
-)
+from packages.application.applications.delete_application import DeleteApplication
 from packages.application.applications.get_application import (
     ApplicationNotFoundError as GetApplicationNotFoundError,
 )
-from packages.application.applications.get_application import (
-    GetApplication,
-)
+from packages.application.applications.get_application import GetApplication
 from packages.application.applications.list_applications import ListApplications
+from packages.application.applications.submit_application import (
+    ApplicationNotFoundError as SubmitApplicationNotFoundError,
+)
+from packages.application.applications.submit_application import (
+    ApplicationSubmissionContextNotFoundError,
+    InvalidApplicationSubmissionError,
+)
 from packages.application.applications.update_application import (
     UNSET,
     InvalidApplicationTransitionError,
@@ -264,3 +268,35 @@ async def delete_application(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
         ) from exc
+
+
+@router.post(
+    "/{application_id}/submit",
+    response_model=ApplicationResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def submit_application(
+    application_id: UUID,
+    use_case: SubmitApplicationDependency,
+) -> ApplicationResponse:
+    """Submit an application through the configured submission gateway."""
+
+    try:
+        application = await use_case.execute(application_id)
+    except SubmitApplicationNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
+    except ApplicationSubmissionContextNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
+    except InvalidApplicationSubmissionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        ) from exc
+
+    return to_response(application)

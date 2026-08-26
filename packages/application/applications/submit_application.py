@@ -9,6 +9,9 @@ from packages.domain.applications.entities import (
 from packages.domain.applications.gateway import ApplicationSubmissionGateway
 from packages.domain.applications.repositories import ApplicationRepository
 from packages.domain.applications.submission import SubmissionStatus
+from packages.domain.applications.submission_repositories import (
+    ApplicationSubmissionContextRepository,
+)
 
 
 class ApplicationNotFoundError(Exception):
@@ -19,15 +22,21 @@ class InvalidApplicationSubmissionError(Exception):
     """Raised when an application cannot be submitted."""
 
 
+class ApplicationSubmissionContextNotFoundError(Exception):
+    """Raised when submission context cannot be loaded."""
+
+
 class SubmitApplication:
     """Submit an application through an external submission gateway."""
 
     def __init__(
         self,
         repository: ApplicationRepository,
+        submission_context_repository: ApplicationSubmissionContextRepository,
         gateway: ApplicationSubmissionGateway,
     ) -> None:
         self._repository = repository
+        self._submission_context_repository = submission_context_repository
         self._gateway = gateway
 
     async def execute(
@@ -50,7 +59,16 @@ class SubmitApplication:
                 f"Application '{application_id}' is not ready for submission.",
             )
 
-        result = await self._gateway.submit(application_id)
+        context = await self._submission_context_repository.get_by_application_id(
+            application_id,
+        )
+
+        if context is None:
+            raise ApplicationSubmissionContextNotFoundError(
+                f"Submission context for application '{application_id}' was not found.",
+            )
+
+        result = await self._gateway.submit(context)
 
         if result.status == SubmissionStatus.SUBMITTED:
             updated_application = replace(

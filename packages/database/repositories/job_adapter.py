@@ -1,6 +1,5 @@
 from collections.abc import Sequence
 from uuid import UUID
-from packages.domain.jobs.repositories import JobRepository
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +8,7 @@ from packages.database.repositories.job import (
     JobRepository as DatabaseJobRepository,
 )
 from packages.domain.jobs.entities import Job
+from packages.domain.jobs.repositories import JobRepository
 
 
 class JobRepositoryAdapter(JobRepository):

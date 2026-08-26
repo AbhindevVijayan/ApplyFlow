@@ -5,6 +5,7 @@ import pytest
 
 from packages.application.applications.submit_application import (
     ApplicationNotFoundError,
+    ApplicationSubmissionContextNotFoundError,
     InvalidApplicationSubmissionError,
     SubmitApplication,
 )
@@ -15,6 +16,9 @@ from packages.domain.applications.entities import (
 from packages.domain.applications.submission import (
     SubmissionResult,
     SubmissionStatus,
+)
+from packages.domain.applications.submission_context import (
+    ApplicationSubmissionContext,
 )
 
 
@@ -53,13 +57,32 @@ class FakeApplicationRepository:
         return None
 
 
+class FakeSubmissionContextRepository:
+    def __init__(
+        self,
+        context: ApplicationSubmissionContext | None = None,
+    ) -> None:
+        self.context = context
+        self.requested_application_id = None
+
+    async def get_by_application_id(
+        self,
+        application_id,
+    ) -> ApplicationSubmissionContext | None:
+        self.requested_application_id = application_id
+        return self.context
+
+
 class FakeSubmissionGateway:
     def __init__(self, result: SubmissionResult) -> None:
         self.result = result
-        self.submitted_application_id = None
+        self.submitted_context = None
 
-    async def submit(self, application_id):
-        self.submitted_application_id = application_id
+    async def submit(
+        self,
+        context: ApplicationSubmissionContext,
+    ) -> SubmissionResult:
+        self.submitted_context = context
         return self.result
 
 
@@ -77,6 +100,26 @@ def make_application(
     )
 
 
+def make_submission_context(
+    application: Application,
+) -> ApplicationSubmissionContext:
+    return ApplicationSubmissionContext(
+        application_id=application.id,
+        candidate_id=application.candidate_id,
+        candidate_name="Test Candidate",
+        candidate_email="test@example.com",
+        candidate_phone="9876543210",
+        job_id=application.job_id,
+        job_title="Software Engineer",
+        company="Test Company",
+        source="test",
+        source_url="https://example.com/jobs/test",
+        resume_id=application.resume_id,
+        resume_filename="resume.pdf",
+        resume_storage_key="test-resumes/resume.pdf",
+    )
+
+
 @pytest.mark.asyncio
 async def test_submit_application_raises_when_application_does_not_exist() -> None:
     repository = FakeApplicationRepository()
@@ -87,8 +130,11 @@ async def test_submit_application_raises_when_application_does_not_exist() -> No
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository()
+
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -97,7 +143,7 @@ async def test_submit_application_raises_when_application_does_not_exist() -> No
     with pytest.raises(ApplicationNotFoundError):
         await use_case.execute(application_id)
 
-    assert gateway.submitted_application_id is None
+    assert gateway.submitted_context is None
 
 
 @pytest.mark.asyncio
@@ -112,15 +158,19 @@ async def test_submit_application_rejects_application_not_ready() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
     with pytest.raises(InvalidApplicationSubmissionError):
         await use_case.execute(application.id)
 
-    assert gateway.submitted_application_id is None
+    assert gateway.submitted_context is None
     assert repository.updated_application is None
 
 
@@ -137,8 +187,12 @@ async def test_submit_application_marks_application_as_submitted() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -149,7 +203,8 @@ async def test_submit_application_marks_application_as_submitted() -> None:
     assert result.external_application_url == "https://example.com/application/123"
     assert result.failure_reason is None
 
-    assert gateway.submitted_application_id == application.id
+    assert gateway.submitted_context is not None
+    assert gateway.submitted_context.application_id == application.id
     assert repository.updated_application is not None
     assert repository.updated_application.status == ApplicationStatus.SUBMITTED
 
@@ -167,8 +222,12 @@ async def test_submit_application_persists_failure_reason() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -178,7 +237,8 @@ async def test_submit_application_persists_failure_reason() -> None:
     assert result.status == ApplicationStatus.READY
     assert result.failure_reason == ("External provider rejected the application.")
 
-    assert gateway.submitted_application_id == application.id
+    assert gateway.submitted_context is not None
+    assert gateway.submitted_context.application_id == application.id
     assert repository.updated_application is not None
     assert repository.updated_application.failure_reason == (
         "External provider rejected the application."
@@ -207,8 +267,12 @@ async def test_submit_application_preserves_existing_application_fields() -> Non
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -233,15 +297,19 @@ async def test_submit_application_rejects_already_submitted_application() -> Non
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
     with pytest.raises(InvalidApplicationSubmissionError):
         await use_case.execute(application.id)
 
-    assert gateway.submitted_application_id is None
+    assert gateway.submitted_context is None
     assert repository.updated_application is None
 
 
@@ -265,8 +333,12 @@ async def test_submit_application_can_retry_after_failure() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -292,8 +364,12 @@ async def test_submit_application_sets_applied_at_after_success() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
@@ -325,11 +401,42 @@ async def test_submit_application_preserves_existing_applied_at() -> None:
         ),
     )
 
+    context_repository = FakeSubmissionContextRepository(
+        make_submission_context(application),
+    )
     use_case = SubmitApplication(
         repository=repository,
+        submission_context_repository=context_repository,
         gateway=gateway,
     )
 
     result = await use_case.execute(application.id)
 
     assert result.applied_at == existing_applied_at
+
+
+@pytest.mark.asyncio
+async def test_submit_application_raises_when_submission_context_does_not_exist() -> None:
+    application = make_application(ApplicationStatus.READY)
+
+    repository = FakeApplicationRepository(application)
+    context_repository = FakeSubmissionContextRepository()
+
+    gateway = FakeSubmissionGateway(
+        SubmissionResult(
+            status=SubmissionStatus.SUBMITTED,
+        ),
+    )
+
+    use_case = SubmitApplication(
+        repository=repository,
+        submission_context_repository=context_repository,
+        gateway=gateway,
+    )
+
+    with pytest.raises(ApplicationSubmissionContextNotFoundError):
+        await use_case.execute(application.id)
+
+    assert context_repository.requested_application_id == application.id
+    assert gateway.submitted_context is None
+    assert repository.updated_application is None

@@ -1,7 +1,9 @@
 from typing import Protocol
-from uuid import UUID
 
 from packages.domain.applications.submission import SubmissionResult
+from packages.domain.applications.submission_context import (
+    ApplicationSubmissionContext,
+)
 
 
 class ApplicationSubmissionGateway(Protocol):
@@ -9,7 +11,7 @@ class ApplicationSubmissionGateway(Protocol):
 
     async def submit(
         self,
-        application_id: UUID,
+        context: ApplicationSubmissionContext,
     ) -> SubmissionResult:
         """Submit an application to an external provider."""
         ...
