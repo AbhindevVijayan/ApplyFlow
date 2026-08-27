@@ -1,12 +1,9 @@
 from dataclasses import dataclass
-from uuid import UUID
 
 
 @dataclass(frozen=True, slots=True)
 class CandidateProfile:
     """Professional profile associated with a candidate."""
-
-    candidate_id: UUID
 
     headline: str | None = None
     summary: str | None = None

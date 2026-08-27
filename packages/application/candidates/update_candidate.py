@@ -85,6 +85,7 @@ class UpdateCandidate:
             email=email,
             phone=phone,
             location=location,
+            profile=candidate.profile,
         )
 
         return await self._repository.update(updated)

@@ -2,7 +2,10 @@ from uuid import UUID
 
 from packages.domain.candidates.repository import CandidateRepository
 from packages.domain.evaluation.entities import EvaluationResult
-from packages.domain.evaluation.enums import EvaluationDecision
+from packages.domain.evaluation.scoring import (
+    calculate_skill_score,
+    determine_evaluation_decision,
+)
 from packages.domain.jobs.repositories import JobRepository
 from packages.domain.skills.repository import SkillRepository
 
@@ -65,33 +68,16 @@ class EvaluateJob:
             if skill is not None:
                 candidate_skill_names.append(skill.name)
 
-        candidate_skill_lookup = {skill.strip().casefold() for skill in candidate_skill_names}
-
-        matched_skills = tuple(
-            required_skill
-            for required_skill in job.required_skills
-            if required_skill.strip().casefold() in candidate_skill_lookup
+        skill_score = calculate_skill_score(
+            required_skills=job.required_skills,
+            candidate_skills=tuple(candidate_skill_names),
         )
 
-        missing_skills = tuple(
-            required_skill
-            for required_skill in job.required_skills
-            if required_skill.strip().casefold() not in candidate_skill_lookup
-        )
+        score = skill_score.score
+        matched_skills = skill_score.matched_skills
+        missing_skills = skill_score.missing_skills
 
-        if job.required_skills:
-            score = len(matched_skills) / len(job.required_skills)
-        else:
-            score = 1.0
-
-        if score >= 0.8:
-            decision = EvaluationDecision.STRONG_MATCH
-        elif score >= 0.6:
-            decision = EvaluationDecision.MATCH
-        elif score >= 0.3:
-            decision = EvaluationDecision.WEAK_MATCH
-        else:
-            decision = EvaluationDecision.NO_MATCH
+        decision = determine_evaluation_decision(score)
 
         location_match = self._location_matches(
             candidate.location,
