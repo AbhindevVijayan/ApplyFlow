@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import DateTime, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from packages.database.base import Base
+
+if TYPE_CHECKING:
+    from packages.database.models.job_skill import JobSkill
 
 
 class Job(Base):
@@ -62,4 +66,10 @@ class Job(Base):
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
+    )
+
+    required_skill_links: Mapped[list["JobSkill"]] = relationship(
+        back_populates="job",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )

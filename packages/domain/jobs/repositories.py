@@ -8,11 +8,17 @@ from packages.domain.jobs.entities import Job
 class JobRepository(Protocol):
     """Persistence contract for job entities."""
 
-    async def create(self, job: Job) -> Job:
-        """Persist a new job."""
+    async def create(
+        self,
+        job: Job,
+    ) -> Job:
+        """Create and persist a job."""
         ...
 
-    async def get_by_id(self, job_id: UUID) -> Job | None:
+    async def get_by_id(
+        self,
+        job_id: UUID,
+    ) -> Job | None:
         """Return a job by ID."""
         ...
 
@@ -27,10 +33,16 @@ class JobRepository(Protocol):
         """Return all jobs."""
         ...
 
-    async def update(self, job: Job) -> Job:
-        """Update an existing job."""
+    async def update(
+        self,
+        job: Job,
+    ) -> Job:
+        """Update and persist a job."""
         ...
 
-    async def delete(self, job_id: UUID) -> None:
-        """Delete a job by ID."""
+    async def delete(
+        self,
+        job_id: UUID,
+    ) -> None:
+        """Delete a job."""
         ...

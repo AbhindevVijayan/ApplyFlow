@@ -8,9 +8,12 @@ from packages.database.base import Base
 
 if TYPE_CHECKING:
     from packages.database.models.candidate import Candidate
+    from packages.database.models.job_skill import JobSkill
 
 
 class Skill(Base):
+    """Persistence model for a skill."""
+
     __tablename__ = "skills"
 
     id: Mapped[UUID] = mapped_column(
@@ -30,8 +33,15 @@ class Skill(Base):
         passive_deletes=True,
     )
 
+    job_links: Mapped[list["JobSkill"]] = relationship(
+        back_populates="skill",
+        passive_deletes=True,
+    )
+
 
 class CandidateSkill(Base):
+    """Association between a candidate and a skill."""
+
     __tablename__ = "candidate_skills"
 
     candidate_id: Mapped[UUID] = mapped_column(
