@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from packages.api.routes.agents import router as agents_router
 from packages.api.routes.applications import router as applications_router
 from packages.api.routes.candidates import router as candidates_router
 from packages.api.routes.discovery import router as discovery_router
@@ -31,5 +32,6 @@ router.include_router(candidates_router)
 router.include_router(resumes_router)
 router.include_router(jobs_router)
 router.include_router(discovery_router)
+router.include_router(agents_router)
 router.include_router(skills_router)
 router.include_router(applications_router)

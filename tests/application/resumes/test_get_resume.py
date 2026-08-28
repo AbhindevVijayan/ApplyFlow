@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -7,22 +7,33 @@ from packages.application.resumes.get_resume import (
     GetResumeCommand,
 )
 from packages.domain.resumes.entities import Resume
+from packages.domain.resumes.repository import ResumeRepository
 
 
-class FakeResumeRepository:
+class FakeResumeRepository(ResumeRepository):
     def __init__(self, resumes: list[Resume] | None = None) -> None:
         self.resumes = resumes or []
 
-    async def get_by_id(self, resume_id):
+    async def create(self, resume: Resume) -> Resume:
+        self.resumes.append(resume)
+        return resume
+
+    async def get_by_id(self, resume_id: UUID) -> Resume | None:
         return next(
             (resume for resume in self.resumes if resume.id == resume_id),
             None,
         )
 
-    async def get_by_candidate_id(self, candidate_id):
+    async def get_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> list[Resume]:
         return [resume for resume in self.resumes if resume.candidate_id == candidate_id]
 
-    async def get_canonical_by_candidate_id(self, candidate_id):
+    async def get_canonical_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> Resume | None:
         return next(
             (
                 resume
@@ -32,11 +43,22 @@ class FakeResumeRepository:
             None,
         )
 
+    async def update(self, resume: Resume) -> Resume:
+        for index, existing in enumerate(self.resumes):
+            if existing.id == resume.id:
+                self.resumes[index] = resume
+                return resume
+
+        raise AssertionError("Resume not found")
+
+    async def delete(self, resume_id: UUID) -> None:
+        self.resumes = [resume for resume in self.resumes if resume.id != resume_id]
+
 
 def make_resume(
-    candidate_id,
+    candidate_id: UUID,
     *,
-    is_canonical=False,
+    is_canonical: bool = False,
 ) -> Resume:
     return Resume(
         id=uuid4(),

@@ -40,6 +40,9 @@ class FakeCandidateRepository:
 
         raise ValueError("Candidate not found")
 
+    async def list_all(self) -> list[Candidate]:
+        return list(self.candidates)
+
     async def delete(self, candidate_id: UUID) -> None:
         self.candidates = [
             candidate for candidate in self.candidates if candidate.id != candidate_id

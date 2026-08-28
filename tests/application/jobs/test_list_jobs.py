@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -16,13 +16,13 @@ class FakeJobRepository:
         self.jobs.append(job)
         return job
 
-    async def get_by_id(self, job_id):
+    async def get_by_id(self, job_id: UUID) -> Job | None:
         return next(
             (job for job in self.jobs if job.id == job_id),
             None,
         )
 
-    async def get_by_source_url(self, source_url: str):
+    async def get_by_source_url(self, source_url: str) -> Job | None:
         return next(
             (job for job in self.jobs if job.source_url == source_url),
             None,
@@ -31,7 +31,11 @@ class FakeJobRepository:
     async def list_all(self) -> list[Job]:
         return list(self.jobs)
 
-    async def delete(self, job_id) -> None:
+    async def update(self, job: Job) -> Job:
+        self.jobs = [job if existing.id == job.id else existing for existing in self.jobs]
+        return job
+
+    async def delete(self, job_id: UUID) -> None:
         self.jobs = [job for job in self.jobs if job.id != job_id]
 
 

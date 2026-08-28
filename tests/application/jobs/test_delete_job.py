@@ -37,6 +37,14 @@ class FakeJobRepository:
     async def list_all(self) -> list[Job]:
         return list(self.jobs)
 
+    async def update(self, job: Job) -> Job:
+        for index, existing_job in enumerate(self.jobs):
+            if existing_job.id == job.id:
+                self.jobs[index] = job
+                return job
+
+        raise ValueError(f"Job not found: {job.id}")
+
     async def delete(self, job_id: UUID) -> None:
         self.jobs = [job for job in self.jobs if job.id != job_id]
 

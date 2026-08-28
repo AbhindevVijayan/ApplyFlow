@@ -45,6 +45,22 @@ class FakeCandidateExperienceRepository:
 
         raise ValueError("Candidate experience not found")
 
+    async def get_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> list[CandidateExperience]:
+        return [
+            experience for experience in self.experiences if experience.candidate_id == candidate_id
+        ]
+
+    async def delete(
+        self,
+        experience_id: UUID,
+    ) -> None:
+        self.experiences = [
+            experience for experience in self.experiences if experience.id != experience_id
+        ]
+
 
 @pytest.mark.asyncio
 async def test_update_experience_updates_fields() -> None:

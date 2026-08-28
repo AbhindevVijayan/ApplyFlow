@@ -13,8 +13,17 @@ from packages.domain.candidates.education import CandidateEducation
 
 
 class FakeCandidateEducationRepository:
+    """In-memory repository for application-layer tests."""
+
     def __init__(self) -> None:
         self.education: list[CandidateEducation] = []
+
+    async def create(
+        self,
+        education: CandidateEducation,
+    ) -> CandidateEducation:
+        self.education.append(education)
+        return education
 
     async def get_by_id(
         self,
@@ -24,6 +33,12 @@ class FakeCandidateEducationRepository:
             (item for item in self.education if item.id == education_id),
             None,
         )
+
+    async def get_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> list[CandidateEducation]:
+        return [item for item in self.education if item.candidate_id == candidate_id]
 
     async def update(
         self,
@@ -35,6 +50,12 @@ class FakeCandidateEducationRepository:
                 return education
 
         raise ValueError("Education not found")
+
+    async def delete(
+        self,
+        education_id: UUID,
+    ) -> None:
+        self.education = [item for item in self.education if item.id != education_id]
 
 
 @pytest.mark.asyncio

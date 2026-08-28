@@ -21,6 +21,7 @@ class CreateJobCommand:
     description: str | None = None
     location: str | None = None
     employment_type: str | None = None
+    required_skills: tuple[str, ...] = ()
     discovered_at: datetime | None = None
 
 
@@ -54,6 +55,7 @@ class CreateJob:
             description=command.description,
             location=command.location,
             employment_type=command.employment_type,
+            required_skills=command.required_skills,
             discovered_at=command.discovered_at,
         )
 

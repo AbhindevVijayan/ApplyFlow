@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -11,9 +11,10 @@ from packages.application.resumes.update_resume import (
     UpdateResumeCommand,
 )
 from packages.domain.resumes.entities import Resume
+from packages.domain.resumes.repository import ResumeRepository
 
 
-class FakeResumeRepository:
+class FakeResumeRepository(ResumeRepository):
     def __init__(self) -> None:
         self.resumes: list[Resume] = []
 
@@ -21,16 +22,22 @@ class FakeResumeRepository:
         self.resumes.append(resume)
         return resume
 
-    async def get_by_id(self, resume_id):
+    async def get_by_id(self, resume_id: UUID) -> Resume | None:
         return next(
             (resume for resume in self.resumes if resume.id == resume_id),
             None,
         )
 
-    async def get_by_candidate_id(self, candidate_id):
+    async def get_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> list[Resume]:
         return [resume for resume in self.resumes if resume.candidate_id == candidate_id]
 
-    async def get_canonical_by_candidate_id(self, candidate_id):
+    async def get_canonical_by_candidate_id(
+        self,
+        candidate_id: UUID,
+    ) -> Resume | None:
         return next(
             (
                 resume
@@ -48,7 +55,7 @@ class FakeResumeRepository:
 
         raise AssertionError("Resume not found")
 
-    async def delete(self, resume_id) -> None:
+    async def delete(self, resume_id: UUID) -> None:
         self.resumes = [resume for resume in self.resumes if resume.id != resume_id]
 
 

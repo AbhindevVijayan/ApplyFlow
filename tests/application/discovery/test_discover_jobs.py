@@ -6,6 +6,9 @@ import pytest
 from packages.application.discovery.discover_jobs import DiscoverJobs
 from packages.domain.discovery.entities import DiscoveredJob
 from packages.domain.jobs.entities import Job
+from packages.infrastructure.requirements.keyword_extractor import (
+    KeywordJobRequirementsExtractor,
+)
 
 
 class FakeJobSource:
@@ -86,6 +89,7 @@ async def test_discover_jobs_persists_discovered_jobs() -> None:
     use_case = DiscoverJobs(
         source=source,
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     result = await use_case.execute()
@@ -134,6 +138,7 @@ async def test_discover_jobs_skips_existing_source_urls() -> None:
     use_case = DiscoverJobs(
         source=source,
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     result = await use_case.execute()
@@ -155,6 +160,7 @@ async def test_discover_jobs_returns_empty_result_when_source_is_empty() -> None
     use_case = DiscoverJobs(
         source=source,
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     result = await use_case.execute()

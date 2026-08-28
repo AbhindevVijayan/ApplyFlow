@@ -41,11 +41,7 @@ class JobSkillRepository:
         job_id: UUID,
     ) -> Sequence[JobSkill]:
         """Return all required skills for a job."""
-        statement = (
-            select(JobSkill)
-            .where(JobSkill.job_id == job_id)
-            .order_by(JobSkill.skill_id)
-        )
+        statement = select(JobSkill).where(JobSkill.job_id == job_id).order_by(JobSkill.skill_id)
 
         result = await self._session.execute(statement)
 

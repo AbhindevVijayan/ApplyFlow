@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -13,26 +13,42 @@ class FakeJobRepository:
     """In-memory repository for application-layer tests."""
 
     def __init__(self) -> None:
-        self.jobs: dict = {}
+        self.jobs: dict[UUID, Job] = {}
 
     async def create(self, job: Job) -> Job:
         self.jobs[job.id] = job
         return job
 
-    async def get_by_id(self, job_id):
+    async def get_by_id(
+        self,
+        job_id: UUID,
+    ) -> Job | None:
         return self.jobs.get(job_id)
 
-    async def get_by_source_url(self, source_url: str):
+    async def get_by_source_url(
+        self,
+        source_url: str,
+    ) -> Job | None:
         for job in self.jobs.values():
             if job.source_url == source_url:
                 return job
 
         return None
 
-    async def list_all(self):
+    async def list_all(self) -> list[Job]:
         return list(self.jobs.values())
 
-    async def delete(self, job_id) -> None:
+    async def update(self, job: Job) -> Job:
+        if job.id not in self.jobs:
+            raise ValueError(f"Job not found: {job.id}")
+
+        self.jobs[job.id] = job
+        return job
+
+    async def delete(
+        self,
+        job_id: UUID,
+    ) -> None:
         self.jobs.pop(job_id, None)
 
 

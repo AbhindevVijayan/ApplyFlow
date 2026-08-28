@@ -1,3 +1,4 @@
+from packages.database.models.agent_run import AgentRun
 from packages.database.models.application import Application
 from packages.database.models.candidate import Candidate
 from packages.database.models.candidate_education import CandidateEducation
@@ -9,6 +10,7 @@ from packages.database.models.resume import Resume
 from packages.database.models.skill import CandidateSkill, Skill
 
 __all__ = [
+    "AgentRun",
     "Application",
     "Candidate",
     "CandidateProfile",
@@ -19,5 +21,4 @@ __all__ = [
     "JobSkill",
     "Resume",
     "Skill",
-    
 ]

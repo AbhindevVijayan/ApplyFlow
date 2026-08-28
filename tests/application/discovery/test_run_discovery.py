@@ -8,6 +8,9 @@ from packages.application.discovery.run_discovery import (
 )
 from packages.domain.discovery.entities import DiscoveredJob
 from packages.domain.jobs.entities import Job
+from packages.infrastructure.requirements.keyword_extractor import (
+    KeywordJobRequirementsExtractor,
+)
 
 
 class FakeJobSource:
@@ -98,6 +101,7 @@ async def test_run_discovery_persists_jobs() -> None:
     use_case = RunDiscovery(
         sources=[source],
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     results = await use_case.execute()
@@ -141,6 +145,7 @@ async def test_run_discovery_runs_multiple_sources() -> None:
     use_case = RunDiscovery(
         sources=[greenhouse, another_source],
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     results = await use_case.execute()
@@ -174,6 +179,7 @@ async def test_run_discovery_skips_duplicate_jobs() -> None:
     use_case = RunDiscovery(
         sources=[source],
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     results = await use_case.execute()
@@ -223,6 +229,7 @@ async def test_run_discovery_isolates_source_failures() -> None:
     use_case = RunDiscovery(
         sources=[failing_source, working_source],
         repository=repository,
+        requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 
     results = await use_case.execute()

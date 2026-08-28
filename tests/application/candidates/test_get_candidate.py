@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -10,17 +10,25 @@ from packages.domain.candidates.entities import Candidate
 
 
 class FakeCandidateRepository:
+    """In-memory repository for application-layer tests."""
+
     def __init__(self) -> None:
-        self.candidates: dict = {}
+        self.candidates: dict[UUID, Candidate] = {}
 
     async def create(self, candidate: Candidate) -> Candidate:
         self.candidates[candidate.id] = candidate
         return candidate
 
-    async def get_by_id(self, candidate_id):
+    async def get_by_id(
+        self,
+        candidate_id: UUID,
+    ) -> Candidate | None:
         return self.candidates.get(candidate_id)
 
-    async def get_by_email(self, email: str):
+    async def get_by_email(
+        self,
+        email: str,
+    ) -> Candidate | None:
         for candidate in self.candidates.values():
             if candidate.email == email:
                 return candidate
@@ -28,10 +36,19 @@ class FakeCandidateRepository:
         return None
 
     async def update(self, candidate: Candidate) -> Candidate:
+        if candidate.id not in self.candidates:
+            raise ValueError(f"Candidate not found: {candidate.id}")
+
         self.candidates[candidate.id] = candidate
         return candidate
 
-    async def delete(self, candidate_id) -> None:
+    async def list_all(self) -> list[Candidate]:
+        return list(self.candidates.values())
+
+    async def delete(
+        self,
+        candidate_id: UUID,
+    ) -> None:
         self.candidates.pop(candidate_id, None)
 
 

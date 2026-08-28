@@ -171,7 +171,7 @@ async def test_duplicate_job_skill_raises_integrity_error(
     skill: Skill,
 ) -> None:
     repository = JobSkillRepository(session)
-    
+
     job_id = job.id
     skill_id = skill.id
 
@@ -187,9 +187,9 @@ async def test_duplicate_job_skill_raises_integrity_error(
 
     await repository.add(first)
     await session.commit()
-    
+
     session.expunge(first)
-        
+
     with pytest.raises(IntegrityError):
         await repository.add(second)
 

@@ -42,6 +42,10 @@ class FakeJobRepository:
     async def delete(self, job_id: UUID) -> None:
         self.jobs = [job for job in self.jobs if job.id != job_id]
 
+    async def update(self, job: Job) -> Job:
+        self.jobs = [job if existing.id == job.id else existing for existing in self.jobs]
+        return job
+
 
 @pytest.mark.asyncio
 async def test_create_job_creates_and_returns_job() -> None:

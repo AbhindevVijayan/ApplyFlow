@@ -5,6 +5,7 @@ from packages.application.discovery.discover_jobs import DiscoverJobs
 from packages.domain.discovery.sources import JobSource
 from packages.domain.jobs.entities import Job
 from packages.domain.jobs.repositories import JobRepository
+from packages.domain.requirements.extractor import JobRequirementsExtractor
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,9 +28,11 @@ class RunDiscovery:
         self,
         sources: Sequence[JobSource],
         repository: JobRepository,
+        requirements_extractor: JobRequirementsExtractor,
     ) -> None:
         self._sources = sources
         self._repository = repository
+        self._requirements_extractor = requirements_extractor
 
     async def execute(self) -> Sequence[DiscoveryResult]:
         """Discover and persist jobs from all configured sources."""
@@ -41,6 +44,7 @@ class RunDiscovery:
                 discover_jobs = DiscoverJobs(
                     source=source,
                     repository=self._repository,
+                    requirements_extractor=self._requirements_extractor,
                 )
 
                 result = await discover_jobs.execute()

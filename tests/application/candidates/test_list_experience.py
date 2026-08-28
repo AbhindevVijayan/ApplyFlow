@@ -13,12 +13,47 @@ class FakeCandidateExperienceRepository:
     def __init__(self) -> None:
         self.experiences: list[CandidateExperience] = []
 
+    async def create(
+        self,
+        experience: CandidateExperience,
+    ) -> CandidateExperience:
+        self.experiences.append(experience)
+        return experience
+
+    async def get_by_id(
+        self,
+        experience_id: UUID,
+    ) -> CandidateExperience | None:
+        return next(
+            (experience for experience in self.experiences if experience.id == experience_id),
+            None,
+        )
+
     async def get_by_candidate_id(
         self,
         candidate_id: UUID,
     ) -> list[CandidateExperience]:
         return [
             experience for experience in self.experiences if experience.candidate_id == candidate_id
+        ]
+
+    async def update(
+        self,
+        experience: CandidateExperience,
+    ) -> CandidateExperience:
+        for index, existing in enumerate(self.experiences):
+            if existing.id == experience.id:
+                self.experiences[index] = experience
+                return experience
+
+        raise ValueError("Candidate experience not found")
+
+    async def delete(
+        self,
+        experience_id: UUID,
+    ) -> None:
+        self.experiences = [
+            experience for experience in self.experiences if experience.id != experience_id
         ]
 
 

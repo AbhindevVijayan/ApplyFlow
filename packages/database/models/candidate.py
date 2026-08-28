@@ -67,8 +67,8 @@ class Candidate(Base):
     )
 
     profile: Mapped["CandidateProfile | None"] = relationship(
-    back_populates="candidate",
-    uselist=False,
-    cascade="all, delete-orphan",
-    lazy="selectin",
+        back_populates="candidate",
+        uselist=False,
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )

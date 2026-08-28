@@ -43,3 +43,6 @@ build/
 .coverage
 
 .coverage
+
+
+mypy-errors.txt
