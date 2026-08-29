@@ -4,6 +4,7 @@ from packages.domain.candidates.repository import CandidateRepository
 from packages.domain.evaluation.entities import EvaluationResult
 from packages.domain.evaluation.scoring import (
     calculate_skill_score,
+    calculate_weighted_score,
     determine_evaluation_decision,
 )
 from packages.domain.jobs.repositories import JobRepository
@@ -68,33 +69,57 @@ class EvaluateJob:
             if skill is not None:
                 candidate_skill_names.append(skill.name)
 
-        skill_score = calculate_skill_score(
+        skill_result = calculate_skill_score(
             required_skills=job.required_skills,
             candidate_skills=tuple(candidate_skill_names),
         )
-
-        score = skill_score.score
-        matched_skills = skill_score.matched_skills
-        missing_skills = skill_score.missing_skills
-
-        decision = determine_evaluation_decision(score)
 
         location_match = self._location_matches(
             candidate.location,
             job.location,
         )
 
-        employment_type_match = True
+        employment_type_match = self._employment_type_matches(
+            job.employment_type,
+        )
 
-        reasons = (f"{len(matched_skills)} of {len(job.required_skills)} required skills matched.",)
+        location_score = 1.0 if location_match is True else 0.0 if location_match is False else None
+
+        employment_type_score = (
+            1.0
+            if employment_type_match is True
+            else 0.0
+            if employment_type_match is False
+            else None
+        )
+
+        skill_score = skill_result.score if job.required_skills else None
+
+        evaluation_score = calculate_weighted_score(
+            skill_score=skill_score,
+            location_score=location_score,
+            employment_type_score=employment_type_score,
+        )
+        score = skill_result.score
+        decision = determine_evaluation_decision(score)
+
+        reasons = self._build_reasons(
+            matched_skills=skill_result.matched_skills,
+            missing_skills=skill_result.missing_skills,
+            location_match=location_match,
+            employment_type_match=employment_type_match,
+        )
 
         return EvaluationResult(
             job_id=job_id,
             candidate_id=candidate_id,
             score=score,
             decision=decision,
-            matched_skills=matched_skills,
-            missing_skills=missing_skills,
+            skill_score=evaluation_score.skill_score,
+            location_score=evaluation_score.location_score,
+            employment_type_score=evaluation_score.employment_type_score,
+            matched_skills=skill_result.matched_skills,
+            missing_skills=skill_result.missing_skills,
             location_match=location_match,
             employment_type_match=employment_type_match,
             reasons=reasons,
@@ -104,13 +129,66 @@ class EvaluateJob:
     def _location_matches(
         candidate_location: str | None,
         job_location: str | None,
-    ) -> bool:
+    ) -> bool | None:
         """Determine whether candidate and job locations are compatible."""
 
-        if candidate_location is None or job_location is None:
-            return False
+        if job_location is None or not job_location.strip():
+            return None
 
-        candidate = candidate_location.strip().lower()
-        job = job_location.strip().lower()
+        normalized_job_location = job_location.strip().casefold()
 
-        return candidate == job or job == "remote"
+        if normalized_job_location == "remote":
+            return True
+
+        if candidate_location is None or not candidate_location.strip():
+            return None
+
+        normalized_candidate_location = candidate_location.strip().casefold()
+
+        return normalized_candidate_location == normalized_job_location
+
+    @staticmethod
+    def _employment_type_matches(
+        job_employment_type: str | None,
+    ) -> bool | None:
+        """Determine employment-type compatibility when candidate preferences exist."""
+        
+        if job_employment_type is None or not job_employment_type.strip():
+            return None
+
+        return True
+
+    @staticmethod
+    def _build_reasons(
+        *,
+        matched_skills: tuple[str, ...],
+        missing_skills: tuple[str, ...],
+        location_match: bool | None,
+        employment_type_match: bool | None,
+    ) -> tuple[str, ...]:
+        """Build human-readable explanations for the evaluation."""
+
+        reasons: list[str] = []
+
+        total_skills = len(matched_skills) + len(missing_skills)
+
+        if total_skills > 0:
+            reasons.append(
+                f"{len(matched_skills)} of {total_skills} required skills matched.",
+            )
+
+        if missing_skills:
+            reasons.append(
+                f"Missing required skills: {', '.join(missing_skills)}.",
+            )
+
+        if location_match is True:
+            reasons.append(
+                "Location requirements are compatible.",
+            )
+        elif location_match is False:
+            reasons.append(
+                "Location requirements are not compatible.",
+            )
+
+        return tuple(reasons)

@@ -10,10 +10,18 @@ class EvaluationResult:
 
     job_id: UUID
     candidate_id: UUID
+
     score: float
     decision: EvaluationDecision
+
+    skill_score: float | None
+    location_score: float | None
+    employment_type_score: float | None
+
     matched_skills: tuple[str, ...]
     missing_skills: tuple[str, ...]
-    location_match: bool
-    employment_type_match: bool
+
+    location_match: bool | None
+    employment_type_match: bool | None
+
     reasons: tuple[str, ...]

@@ -12,6 +12,16 @@ class SkillScore:
     missing_skills: tuple[str, ...]
 
 
+@dataclass(frozen=True, slots=True)
+class WeightedScore:
+    """Combined evaluation score across available criteria."""
+
+    score: float
+    skill_score: float | None
+    location_score: float | None
+    employment_type_score: float | None
+
+
 def calculate_skill_score(
     required_skills: tuple[str, ...],
     candidate_skills: tuple[str, ...],
@@ -19,7 +29,9 @@ def calculate_skill_score(
     """Calculate how closely candidate skills match required skills."""
 
     candidate_skill_lookup = {
-        skill.strip().casefold() for skill in candidate_skills if skill.strip()
+        skill.strip().casefold()
+        for skill in candidate_skills
+        if skill.strip()
     }
 
     matched_skills = tuple(
@@ -43,6 +55,56 @@ def calculate_skill_score(
         score=score,
         matched_skills=matched_skills,
         missing_skills=missing_skills,
+    )
+
+
+def calculate_weighted_score(
+    *,
+    skill_score: float | None,
+    location_score: float | None,
+    employment_type_score: float | None,
+) -> WeightedScore:
+    """Calculate a weighted score using the criteria that are available."""
+
+    weights = {
+        "skill": 0.7,
+        "location": 0.2,
+        "employment_type": 0.1,
+    }
+
+    available_scores = {
+        "skill": skill_score,
+        "location": location_score,
+        "employment_type": employment_type_score,
+    }
+
+    weighted_total = 0.0
+    total_weight = 0.0
+
+    for criterion, criterion_score in available_scores.items():
+        if criterion_score is None:
+            continue
+
+        if not 0.0 <= criterion_score <= 1.0:
+            raise ValueError(
+                f"{criterion} score must be between 0.0 and 1.0.",
+            )
+
+        weight = weights[criterion]
+
+        weighted_total += criterion_score * weight
+        total_weight += weight
+
+    if total_weight == 0.0:
+        final_score = 0.0
+    else:
+        final_score = weighted_total / total_weight
+
+    return WeightedScore(
+        score=final_score,
+        skill_score=skill_score,
+        location_score=location_score,
+        employment_type_score=employment_type_score,
     )
 
 
