@@ -116,9 +116,16 @@ class ApplicationRepository:
 
     async def delete(
         self,
-        application: Application,
+        application_id: UUID,
     ) -> None:
         """Delete an application."""
+        
+        application = await self.get_by_id(application_id)
+        
+        if application is None:
+            raise ValueError(
+                f"Application not found: {application_id}",
+            )
 
         await self._session.delete(application)
         await self._session.flush()

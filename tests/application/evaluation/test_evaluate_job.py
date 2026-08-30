@@ -132,7 +132,7 @@ async def test_evaluate_job_returns_strong_match_for_matching_skills() -> None:
     assert result.missing_skills == ()
 
     assert result.location_match is True
-    assert result.employment_type_match is True
+    assert result.employment_type_match is None
 
 
 @pytest.mark.asyncio
@@ -197,9 +197,8 @@ async def test_evaluate_job_returns_weak_match_for_partial_skills() -> None:
         job_id=job_id,
     )
 
-    assert result.score == 0.5
+    assert result.score == pytest.approx(0.6111111111111112)
     assert result.decision == EvaluationDecision.WEAK_MATCH
-
     assert result.matched_skills == (
         "Python",
         "Django",
@@ -372,7 +371,7 @@ async def test_evaluate_job_returns_no_match_when_no_skills_match() -> None:
         job_id=job_id,
     )
 
-    assert result.score == 0.0
+    assert result.score == pytest.approx(0.2222222222222222)
     assert result.decision == EvaluationDecision.NO_MATCH
 
     assert result.matched_skills == ()

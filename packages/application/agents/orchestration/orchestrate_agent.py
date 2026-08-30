@@ -7,16 +7,23 @@ from packages.application.applications.create_application import (
     CreateApplication,
     CreateApplicationCommand,
 )
+from packages.application.applications.submit_application import SubmitApplication
 from packages.application.discovery.run_discovery import RunDiscovery
 from packages.application.evaluation.evaluate_job import EvaluateJob
 from packages.domain.agents.entities import AgentRun
 from packages.domain.agents.repositories.agent_run_repository import (
     AgentRunRepository,
 )
+from packages.domain.applications.gateway import ApplicationSubmissionGateway
 from packages.domain.applications.repositories import ApplicationRepository
+from packages.domain.applications.submission_repositories import (
+    ApplicationSubmissionContextRepository,
+)
 from packages.domain.candidates.repository import CandidateRepository
 from packages.domain.discovery.sources import JobSource
-from packages.domain.evaluation.enums import EvaluationDecision
+from packages.domain.evaluation.application_policy import (
+    is_eligible_for_auto_application,
+)
 from packages.domain.jobs.repositories import JobRepository
 from packages.domain.requirements.extractor import JobRequirementsExtractor
 from packages.domain.resumes.repository import ResumeRepository
@@ -36,6 +43,8 @@ class AgentOrchestrator:
         skill_repository: SkillRepository,
         resume_repository: ResumeRepository,
         application_repository: ApplicationRepository,
+        submission_context_repository: ApplicationSubmissionContextRepository,
+        submission_gateway: ApplicationSubmissionGateway,
         requirements_extractor: JobRequirementsExtractor,
     ) -> None:
         self._sources = sources
@@ -45,6 +54,8 @@ class AgentOrchestrator:
         self._skill_repository = skill_repository
         self._resume_repository = resume_repository
         self._application_repository = application_repository
+        self._submission_context_repository = submission_context_repository
+        self._submission_gateway = submission_gateway
         self._requirements_extractor = requirements_extractor
 
     async def execute(
@@ -99,6 +110,12 @@ class AgentOrchestrator:
                 self._application_repository,
             )
 
+            submit_application = SubmitApplication(
+                repository=self._application_repository,
+                submission_context_repository=self._submission_context_repository,
+                gateway=self._submission_gateway,
+            )
+
             for discovery_result in discovery_results:
                 if discovery_result.status != "completed":
                     continue
@@ -111,14 +128,11 @@ class AgentOrchestrator:
 
                     agent_run.jobs_evaluated += 1
 
-                    if evaluation.decision not in (
-                        EvaluationDecision.STRONG_MATCH,
-                        EvaluationDecision.MATCH,
-                    ):
+                    if not is_eligible_for_auto_application(evaluation):
                         continue
 
                     try:
-                        await create_application.execute(
+                        application = await create_application.execute(
                             CreateApplicationCommand(
                                 candidate_id=candidate_id,
                                 job_id=job.id,
@@ -127,6 +141,7 @@ class AgentOrchestrator:
                         )
 
                         agent_run.applications_created += 1
+                        await submit_application.execute(application.id)
 
                     except ApplicationAlreadyExistsError:
                         continue

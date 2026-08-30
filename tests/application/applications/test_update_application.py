@@ -4,15 +4,17 @@ from uuid import uuid4
 import pytest
 
 from packages.application.applications.update_application import (
-    ALLOWED_TRANSITIONS,
     ApplicationNotFoundError,
-    InvalidApplicationTransitionError,
     UpdateApplication,
     UpdateApplicationCommand,
 )
 from packages.domain.applications.entities import (
     Application,
     ApplicationStatus,
+)
+from packages.domain.applications.lifecycle import (
+    ALLOWED_TRANSITIONS,
+    InvalidApplicationTransitionError,
 )
 
 

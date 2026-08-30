@@ -100,9 +100,19 @@ class EvaluateJob:
             location_score=location_score,
             employment_type_score=employment_type_score,
         )
-        score = skill_result.score
-        decision = determine_evaluation_decision(score)
 
+        score = evaluation_score.score
+        
+        decision_score = (
+            skill_result.score
+            if job.required_skills
+            else score
+        )
+                
+        decision = determine_evaluation_decision(
+            decision_score,
+            )
+        
         reasons = self._build_reasons(
             matched_skills=skill_result.matched_skills,
             missing_skills=skill_result.missing_skills,
@@ -150,13 +160,9 @@ class EvaluateJob:
     @staticmethod
     def _employment_type_matches(
         job_employment_type: str | None,
-    ) -> bool | None:
-        """Determine employment-type compatibility when candidate preferences exist."""
-        
-        if job_employment_type is None or not job_employment_type.strip():
-            return None
-
-        return True
+        ) -> bool | None:
+        """Employment compatibility requires candidate preferences."""
+        return None
 
     @staticmethod
     def _build_reasons(

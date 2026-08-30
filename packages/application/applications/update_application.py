@@ -7,6 +7,7 @@ from packages.domain.applications.entities import (
     Application,
     ApplicationStatus,
 )
+from packages.domain.applications.lifecycle import validate_transition
 from packages.domain.applications.repositories import ApplicationRepository
 
 
@@ -37,10 +38,6 @@ class ApplicationNotFoundError(Exception):
     """Raised when the requested application does not exist."""
 
 
-class InvalidApplicationTransitionError(Exception):
-    """Raised when an application status transition is invalid."""
-
-
 @dataclass(frozen=True, slots=True)
 class UpdateApplicationCommand:
     """Fields that may be changed on an application."""
@@ -53,50 +50,13 @@ class UpdateApplicationCommand:
     failure_reason: str | None | Unset = UNSET
 
 
-ALLOWED_TRANSITIONS: dict[
-    ApplicationStatus,
-    frozenset[ApplicationStatus],
-] = {
-    ApplicationStatus.DRAFT: frozenset(
-        {
-            ApplicationStatus.READY,
-            ApplicationStatus.WITHDRAWN,
-        },
-    ),
-    ApplicationStatus.READY: frozenset(
-        {
-            ApplicationStatus.SUBMITTED,
-            ApplicationStatus.WITHDRAWN,
-        },
-    ),
-    ApplicationStatus.SUBMITTED: frozenset(
-        {
-            ApplicationStatus.INTERVIEW,
-            ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
-        },
-    ),
-    ApplicationStatus.INTERVIEW: frozenset(
-        {
-            ApplicationStatus.OFFER,
-            ApplicationStatus.REJECTED,
-            ApplicationStatus.WITHDRAWN,
-        },
-    ),
-    ApplicationStatus.OFFER: frozenset(
-        {
-            ApplicationStatus.WITHDRAWN,
-        },
-    ),
-    ApplicationStatus.REJECTED: frozenset(),
-    ApplicationStatus.WITHDRAWN: frozenset(),
-}
-
-
 class UpdateApplication:
     """Use case for updating an application."""
 
-    def __init__(self, repository: ApplicationRepository) -> None:
+    def __init__(
+        self,
+        repository: ApplicationRepository,
+    ) -> None:
         self._repository = repository
 
     async def execute(
@@ -117,21 +77,12 @@ class UpdateApplication:
         status = application.status
 
         if is_status_set(command.status):
-            requested_status = command.status
+            validate_transition(
+                application.status,
+                command.status,
+            )
 
-            if requested_status != application.status:
-                allowed = ALLOWED_TRANSITIONS[application.status]
-
-                if requested_status not in allowed:
-                    raise InvalidApplicationTransitionError(
-                        (
-                            f"Cannot transition application from "
-                            f"'{application.status}' to "
-                            f"'{requested_status}'."
-                        ),
-                    )
-
-                status = requested_status
+            status = command.status
 
         applied_at = (
             command.applied_at
@@ -141,7 +92,9 @@ class UpdateApplication:
 
         external_application_url = (
             command.external_application_url
-            if is_optional_string_set(command.external_application_url)
+            if is_optional_string_set(
+                command.external_application_url,
+            )
             else application.external_application_url
         )
 

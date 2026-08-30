@@ -273,7 +273,7 @@ async def test_delete_application(
 
     created = await repository.create(application)
 
-    await repository.delete(created)
+    await repository.delete(created.id)
 
     result = await repository.get_by_id(created.id)
 

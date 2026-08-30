@@ -11,7 +11,18 @@ from packages.domain.agents.repositories.agent_run_repository import (
     AgentRunRepository,
 )
 from packages.domain.applications.entities import Application
+from packages.domain.applications.gateway import ApplicationSubmissionGateway
 from packages.domain.applications.repositories import ApplicationRepository
+from packages.domain.applications.submission import (
+    SubmissionResult,
+    SubmissionStatus,
+)
+from packages.domain.applications.submission_context import (
+    ApplicationSubmissionContext,
+)
+from packages.domain.applications.submission_repositories import (
+    ApplicationSubmissionContextRepository,
+)
 from packages.domain.candidates.entities import Candidate
 from packages.domain.candidates.repository import CandidateRepository
 from packages.domain.discovery.entities import DiscoveredJob
@@ -244,6 +255,47 @@ class FakeApplicationRepository(ApplicationRepository):
             application for application in self.applications if application.id != application_id
         ]
 
+class FakeSubmissionContextRepository(
+    ApplicationSubmissionContextRepository,
+):
+    def __init__(
+        self,
+        candidate_id: UUID,
+        resume_id: UUID,
+    ) -> None:
+        self._candidate_id = candidate_id
+        self._resume_id = resume_id
+
+    async def get_by_application_id(
+        self,
+        application_id: UUID,
+    ) -> ApplicationSubmissionContext | None:
+        return ApplicationSubmissionContext(
+            application_id=application_id,
+            candidate_id=self._candidate_id,
+            candidate_name="Test Candidate",
+            candidate_email="candidate@example.com",
+            candidate_phone=None,
+            job_id=uuid4(),
+            job_title="Python Developer",
+            company="Example Company",
+            source="fake",
+            source_url="https://example.com/jobs/python",
+            resume_id=self._resume_id,
+            resume_filename="resume.pdf",
+            resume_storage_key="resumes/test.pdf",
+        )
+class FakeSubmissionGateway(ApplicationSubmissionGateway):
+    async def submit(
+        self,
+        context: ApplicationSubmissionContext,
+    ) -> SubmissionResult:
+        return SubmissionResult(
+            status=SubmissionStatus.SUBMITTED,
+            external_application_url=(
+                "https://example.com/applications/submitted"
+            ),
+        )
 
 class FakeJobSource(JobSource):
     @property
@@ -292,6 +344,12 @@ async def test_agent_orchestrator_runs_full_workflow() -> None:
     resume_repository = FakeResumeRepository(resume)
     application_repository = FakeApplicationRepository()
     skill_repository = FakeSkillRepository()
+    submission_context_repository = FakeSubmissionContextRepository(
+        candidate_id=candidate_id,
+        resume_id=resume_id,
+    )
+
+    submission_gateway = FakeSubmissionGateway()
 
     orchestrator = AgentOrchestrator(
         sources=[FakeJobSource()],
@@ -301,6 +359,8 @@ async def test_agent_orchestrator_runs_full_workflow() -> None:
         skill_repository=skill_repository,
         resume_repository=resume_repository,
         application_repository=application_repository,
+        submission_context_repository=submission_context_repository,
+        submission_gateway=submission_gateway,
         requirements_extractor=KeywordJobRequirementsExtractor(),
     )
 

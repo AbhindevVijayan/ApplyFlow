@@ -33,7 +33,6 @@ from packages.application.applications.submit_application import (
 )
 from packages.application.applications.update_application import (
     UNSET,
-    InvalidApplicationTransitionError,
     Unset,
     UpdateApplication,
     UpdateApplicationCommand,
@@ -48,6 +47,9 @@ from packages.database.session import get_session
 from packages.domain.applications.entities import (
     Application,
     ApplicationStatus,
+)
+from packages.domain.applications.lifecycle import (
+    InvalidApplicationTransitionError,
 )
 
 router = APIRouter(

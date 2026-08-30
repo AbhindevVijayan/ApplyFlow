@@ -112,9 +112,4 @@ class ApplicationRepositoryAdapter(ApplicationRepository):
     ) -> None:
         """Delete an application by ID."""
 
-        model = await self._repository.get_by_id(application_id)
-
-        if model is None:
-            return
-
-        await self._repository.delete(model)
+        await self._repository.delete(application_id)
