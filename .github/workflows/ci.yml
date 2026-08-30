@@ -38,7 +38,7 @@ jobs:
       - name: Check formatting
         run: ruff format --check .
 
-      - name: Run MyPy
+      - name: Run type checking
         run: mypy packages
 
       - name: Run tests with coverage
