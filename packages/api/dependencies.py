@@ -84,9 +84,7 @@ async def get_agent_orchestrator(
     resume_repository = ResumeRepositoryAdapter(session)
     application_repository = ApplicationRepositoryAdapter(session)
     requirements_extractor = KeywordJobRequirementsExtractor()
-    submission_context_repository = (
-    DatabaseApplicationSubmissionContextRepository(session)
-    )
+    submission_context_repository = DatabaseApplicationSubmissionContextRepository(session)
     submission_gateway = MockApplicationSubmissionGateway()
 
     async with httpx.AsyncClient(

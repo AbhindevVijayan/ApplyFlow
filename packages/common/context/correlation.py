@@ -1,4 +1,4 @@
-from contextvars import ContextVar
+from contextvars import ContextVar, Token
 
 correlation_id_context: ContextVar[str | None] = ContextVar(
     "correlation_id",
@@ -12,15 +12,13 @@ def get_correlation_id() -> str | None:
     return correlation_id_context.get()
 
 
-def set_correlation_id(
-    correlation_id: str,
-):
+def set_correlation_id(correlation_id: str) -> Token[str | None]:
     """Set the correlation ID for the current execution context."""
 
     return correlation_id_context.set(correlation_id)
 
 
-def reset_correlation_id(token) -> None:
+def reset_correlation_id(token: Token[str | None]) -> None:
     """Reset the correlation ID to its previous value."""
 
     correlation_id_context.reset(token)

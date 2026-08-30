@@ -119,9 +119,9 @@ class ApplicationRepository:
         application_id: UUID,
     ) -> None:
         """Delete an application."""
-        
+
         application = await self.get_by_id(application_id)
-        
+
         if application is None:
             raise ValueError(
                 f"Application not found: {application_id}",

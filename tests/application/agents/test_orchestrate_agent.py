@@ -255,6 +255,7 @@ class FakeApplicationRepository(ApplicationRepository):
             application for application in self.applications if application.id != application_id
         ]
 
+
 class FakeSubmissionContextRepository(
     ApplicationSubmissionContextRepository,
 ):
@@ -285,6 +286,8 @@ class FakeSubmissionContextRepository(
             resume_filename="resume.pdf",
             resume_storage_key="resumes/test.pdf",
         )
+
+
 class FakeSubmissionGateway(ApplicationSubmissionGateway):
     async def submit(
         self,
@@ -292,10 +295,9 @@ class FakeSubmissionGateway(ApplicationSubmissionGateway):
     ) -> SubmissionResult:
         return SubmissionResult(
             status=SubmissionStatus.SUBMITTED,
-            external_application_url=(
-                "https://example.com/applications/submitted"
-            ),
+            external_application_url=("https://example.com/applications/submitted"),
         )
+
 
 class FakeJobSource(JobSource):
     @property

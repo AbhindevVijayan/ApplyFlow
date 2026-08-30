@@ -29,9 +29,7 @@ def calculate_skill_score(
     """Calculate how closely candidate skills match required skills."""
 
     candidate_skill_lookup = {
-        skill.strip().casefold()
-        for skill in candidate_skills
-        if skill.strip()
+        skill.strip().casefold() for skill in candidate_skills if skill.strip()
     }
 
     matched_skills = tuple(

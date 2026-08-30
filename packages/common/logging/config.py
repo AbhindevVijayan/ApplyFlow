@@ -23,13 +23,7 @@ def configure_logging() -> None:
     handler.addFilter(CorrelationIdFilter())
 
     formatter = logging.Formatter(
-        (
-            "%(asctime)s "
-            "%(levelname)s "
-            "%(name)s "
-            "[correlation_id=%(correlation_id)s] "
-            "%(message)s"
-        ),
+        ("%(asctime)s %(levelname)s %(name)s [correlation_id=%(correlation_id)s] %(message)s"),
     )
 
     handler.setFormatter(formatter)
